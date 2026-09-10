@@ -22,7 +22,12 @@ public class RentedBookService {
     @KafkaListener(topics = "rented-books", groupId = "book-rented-group")
     void listen(Book bookRented) {
         log.info("Received rented book event: " + bookRented);
-        saveRentedBook(bookRented);
+        List<String> allowedCategories = List.of("Science-Fiction", "Naukowe", "Other");
+        if (allowedCategories.contains(bookRented.getCategory())) {
+            saveRentedBook(bookRented);
+        } else {
+            log.info("Ignored rented book event due to category mismatch: " + bookRented.getCategory());
+        }
     }
 
     public List<BookDto> getRentedBooks(Pageable pageable) {
