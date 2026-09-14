@@ -19,10 +19,17 @@ public class RentedBookService {
     private final BookRepository bookRepository;
     private final BookMapper bookMapper;
 
-    @KafkaListener(topics = "rented-books", groupId = "book-rented-group")
+    @KafkaListener(topics = "rented-books",
+            groupId = "book-rented-group",
+            containerFactory = "filterKafkaListenerContainerFactory"
+    )
     void listen(Book bookRented) {
         log.info("Received rented book event: " + bookRented);
-        saveRentedBook(bookRented);
+        if (bookRented.getBorrower() == null || bookRented.getBorrower().isEmpty()) {
+            bookRepository.deleteById(bookRented.getIsbn());
+        } else {
+            saveRentedBook(bookRented);
+        }
     }
 
     public List<BookDto> getRentedBooks(Pageable pageable) {
