@@ -19,14 +19,16 @@ public class RentedBookService {
     private final BookRepository bookRepository;
     private final BookMapper bookMapper;
 
-    @KafkaListener(topics = "rented-books", groupId = "book-rented-group")
+    @KafkaListener(topics = "rented-books",
+            groupId = "book-rented-group",
+            containerFactory = "filterKafkaListenerContainerFactory"
+    )
     void listen(Book bookRented) {
         log.info("Received rented book event: " + bookRented);
-        List<String> allowedCategories = List.of("Science-Fiction", "Naukowe", "Other");
-        if (allowedCategories.contains(bookRented.getCategory())) {
-            saveRentedBook(bookRented);
+        if (bookRented.getBorrower() == null || bookRented.getBorrower().isEmpty()) {
+            bookRepository.deleteById(bookRented.getIsbn());
         } else {
-            log.info("Ignored rented book event due to category mismatch: " + bookRented.getCategory());
+            saveRentedBook(bookRented);
         }
     }
 

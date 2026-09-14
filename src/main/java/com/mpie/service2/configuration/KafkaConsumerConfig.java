@@ -1,6 +1,7 @@
 package com.mpie.service2.configuration;
 
 import com.mpie.service2.model.Book;
+import com.mpie.service2.model.Category;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,7 @@ import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Configuration
@@ -43,10 +45,12 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Book> kafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, Book> filterKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, Book> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-
+        List<String> allowedCategories = List.of(Category.SCIENCE_FICTION.getName(), Category.NAUKOWE.getName(), Category.OTHER.getName());
+        factory.setRecordFilterStrategy(
+                record -> !allowedCategories.contains(record.value().getCategory()));
         factory.setBatchListener(true);
 
         return factory;
